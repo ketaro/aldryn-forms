@@ -1,4 +1,5 @@
 from tablib import Dataset
+from django.utils import timezone
 
 
 class Exporter(object):
@@ -7,11 +8,14 @@ class Exporter(object):
         self.queryset = queryset
 
     def get_dataset(self, fields):
-        headers = [field.rpartition('-')[0] for field in fields]
+        headers = ["Sent At"] + [field.rpartition('-')[0] for field in fields]
         dataset = Dataset(headers=headers)
+        current_tz = timezone.get_current_timezone()
 
         for submission in self.queryset.only('data').iterator():
-            row_data = []
+            sent_at = submission.sent_at.astimezone(current_tz).strftime('%Y-%m-%d %H:%M:%S')
+
+            row_data = [sent_at]
             form_fields = [field for field in submission.get_form_data()
                            if field.field_id in fields]
 
